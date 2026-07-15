@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --background: #151816;
+  --foreground: #f4f6f4;
+  --panel-bg: rgba(36, 41, 38, 0.7);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  
+  --player-color: #5c8374;
+  --player-glow: rgba(92, 131, 116, 0.4);
+  --ai-color: #b85c5c;
+  --ai-glow: rgba(184, 92, 92, 0.4);
+  
+  --gold-color: #e5b061;
+  --gold-glow: rgba(229, 176, 97, 0.3);
+  
+  --font-outfit: 'Outfit', sans-serif;
+  --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-family: var(--font-outfit);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Standard animation frames */
+@keyframes selectionPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 var(--pulse-color, var(--player-glow)); }
+  50% { transform: scale(1.03); box-shadow: 0 0 12px 4px var(--pulse-color, var(--player-glow)); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 var(--pulse-color, var(--player-glow)); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Floating combat text animation */
+@keyframes floatUpAndOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.8);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-45px) scale(0.9);
+  }
+}
+
+/* Turn Banner slide-in animation */
+@keyframes bannerEntry {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(-15px);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1.02) translateY(0);
+  }
+  85% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.95) translateY(15px);
+  }
+}
+
+.floatingText {
+  position: absolute;
+  font-family: var(--font-outfit);
+  font-weight: 800;
+  font-size: 20px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 100;
+  animation: floatUpAndOut 0.85s forwards cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.floatDamage {
+  color: #ff3b30;
+}
+
+.floatHeal {
+  color: #4cd964;
+}
+
+.floatStatus {
+  color: var(--gold-color);
+}
+
+.turnBanner {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(21, 24, 22, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  pointer-events: none;
+}
+
+.turnBannerCard {
+  background: rgba(36, 41, 38, 0.85);
+  border: 2px solid var(--banner-color, var(--player-color));
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.7), 0 0 30px var(--banner-glow, var(--player-glow));
+  border-radius: 16px;
+  padding: 30px 60px;
+  text-align: center;
+  animation: bannerEntry 1.4s forwards ease-in-out;
+  backdrop-filter: blur(16px);
+}
+
+.turnBannerTitle {
+  font-family: var(--font-outfit);
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--banner-color, var(--player-color));
+}
+
+.turnBannerSubtitle {
+  font-size: 14px;
+  color: #a0a8a3;
+  margin-top: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+

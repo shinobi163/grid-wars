@@ -1,0 +1,397 @@
+.cell {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #242926;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  cursor: default;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  user-select: none;
+}
+
+.cell:hover {
+  filter: brightness(1.15);
+  z-index: 2;
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+}
+
+/* Terrain styles */
+.plains {
+  background-color: #242926;
+}
+
+.mountain {
+  background-color: #1e2320;
+  border: 1px solid rgba(79, 93, 86, 0.2);
+}
+
+.resource {
+  background-color: #2b271f;
+  border: 1px solid rgba(229, 176, 97, 0.15);
+}
+
+.base {
+  background-color: #262121;
+  border: 1px solid rgba(184, 92, 92, 0.15);
+}
+
+/* Icons inside cell */
+.terrainIcon {
+  position: absolute;
+  opacity: 0.15;
+  color: #ffffff;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.resource .terrainIcon {
+  opacity: 0.35;
+  color: var(--gold-color);
+}
+
+.base .terrainIcon {
+  opacity: 0.25;
+  color: #ffffff;
+}
+
+/* Obstacle style */
+.obstacleContainer {
+  position: absolute;
+  width: 80%;
+  height: 80%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555c58;
+  animation: slideIn 0.2s ease-out;
+}
+
+/* Action Overlays */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.overlayMove {
+  background-color: rgba(92, 131, 116, 0.25);
+  border: 2px dashed rgba(92, 131, 116, 0.6);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.overlayMove:hover {
+  background-color: rgba(92, 131, 116, 0.4);
+}
+
+.overlayAttack {
+  background-color: rgba(184, 92, 92, 0.25);
+  border: 2px dashed rgba(184, 92, 92, 0.6);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.overlayAttack:hover {
+  background-color: rgba(184, 92, 92, 0.4);
+}
+
+.overlayHeal {
+  background-color: rgba(92, 131, 116, 0.25);
+  border: 2px dashed rgba(92, 131, 116, 0.6);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.overlayHeal:hover {
+  background-color: rgba(92, 131, 116, 0.4);
+}
+
+.overlayClear {
+  background-color: rgba(229, 176, 97, 0.25);
+  border: 2px dashed rgba(229, 176, 97, 0.6);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.overlayClear:hover {
+  background-color: rgba(229, 176, 97, 0.4);
+}
+
+/* Unit rendering */
+.unitWrapper {
+  position: relative;
+  width: 75%;
+  height: 75%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  cursor: pointer;
+}
+
+.unitToken {
+  width: 92%;
+  height: 92%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-smooth);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
+  border: 3px solid #ffffff;
+}
+
+.playerUnit {
+  background-color: var(--player-color);
+  color: #ffffff;
+}
+
+.aiUnit {
+  background-color: var(--ai-color);
+  color: #ffffff;
+}
+
+.acted {
+  opacity: 0.45;
+  filter: grayscale(0.7) brightness(0.8);
+}
+
+.selected {
+  animation: selectionPulse 1.8s infinite ease-in-out;
+  --pulse-color: var(--player-glow);
+}
+
+.aiUnit.selected {
+  --pulse-color: var(--ai-glow);
+}
+
+/* Health Bar */
+.hpBarContainer {
+  position: absolute;
+  bottom: -6px;
+  left: 10%;
+  width: 80%;
+  height: 4px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hpBarFill {
+  height: 100%;
+  background-color: #4cd964;
+  transition: width 0.25s ease-out;
+}
+
+.hpLow {
+  background-color: #ff3b30;
+}
+
+/* Stars indicator */
+.stars {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 1px 4px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 8px;
+  color: var(--gold-color);
+  z-index: 10;
+}
+
+/* Shield Effect */
+.shieldGlow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--gold-color);
+  box-shadow: 0 0 10px var(--gold-glow);
+  opacity: 0.8;
+  animation: float 2s infinite ease-in-out;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.moveCostBadge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background-color: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: bold;
+  color: #ffffff;
+  padding: 1px 4px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.goldYieldBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background-color: rgba(229, 176, 97, 0.25);
+  border: 1px solid rgba(229, 176, 97, 0.4);
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--gold-color);
+  padding: 1px 4px;
+  z-index: 4;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+@keyframes rotateShield {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.dodgeShield {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2.5px dashed #4cd964;
+  box-shadow: 0 0 12px rgba(76, 217, 100, 0.5);
+  animation: rotateShield 12s infinite linear;
+  z-index: 6;
+  pointer-events: none;
+}
+
+/* Ready Dot Indicator */
+@keyframes pulseGreen {
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(76, 217, 100, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(76, 217, 100, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(76, 217, 100, 0); }
+}
+
+.readyBadge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  font-size: 11px;
+  color: #4cd964;
+  text-shadow: 0 0 4px rgba(76, 217, 100, 0.8);
+  animation: pulseGreen 2s infinite ease-in-out;
+  z-index: 10;
+}
+
+/* Enrage Ring (Red ATK Buff) */
+@keyframes pulseRedRing {
+  0% { box-shadow: 0 0 0 0px rgba(255, 59, 48, 0.6); }
+  100% { box-shadow: 0 0 0 6px rgba(255, 59, 48, 0); }
+}
+
+.enrageRing {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #ff3b30;
+  animation: pulseRedRing 1.5s infinite ease-out;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Fortify Ring (Blue DEF Buff) */
+.fortifyRing {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2.5px solid #007aff;
+  box-shadow: 0 0 8px rgba(0, 122, 255, 0.5);
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Saddle Ring (Yellow Movement Buff) */
+@keyframes pulseYellowRing {
+  0% { box-shadow: 0 0 0 0px rgba(255, 204, 0, 0.5); }
+  100% { box-shadow: 0 0 0 6px rgba(255, 204, 0, 0); }
+}
+
+.saddleRing {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #ffcc00;
+  animation: pulseYellowRing 2s infinite ease-out;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Second Wind Ring (Golden Revive Aura) */
+@keyframes pulseGoldRing {
+  0% { transform: scale(0.96); opacity: 0.5; }
+  50% { transform: scale(1.04); opacity: 0.9; }
+  100% { transform: scale(0.96); opacity: 0.5; }
+}
+
+.secondWindRing {
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2px dotted var(--gold-color);
+  box-shadow: inset 0 0 8px var(--gold-glow);
+  animation: pulseGoldRing 2.2s infinite ease-in-out;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Stealth Ring (Purple Mist) */
+@keyframes shimmerStealth {
+  0% { box-shadow: 0 0 4px rgba(142, 68, 173, 0.4); border-color: rgba(142, 68, 173, 0.4); }
+  50% { box-shadow: 0 0 10px rgba(142, 68, 173, 0.8); border-color: rgba(142, 68, 173, 0.8); }
+  100% { box-shadow: 0 0 4px rgba(142, 68, 173, 0.4); border-color: rgba(142, 68, 173, 0.4); }
+}
+
+.stealthRing {
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2px dashed #9b59b6;
+  animation: shimmerStealth 3s infinite ease-in-out;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.stealthWrapper {
+  opacity: 0.6;
+}
+
+/* Boulder Gold Gleam */
+@keyframes goldShine {
+  0% { opacity: 0.2; transform: scale(0.9); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+  100% { opacity: 0.2; transform: scale(0.9); }
+}
+
+.boulderGoldGleam {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--gold-color);
+  box-shadow: 0 0 8px var(--gold-glow);
+  top: 6px;
+  right: 6px;
+  animation: goldShine 2.5s infinite ease-in-out;
+  pointer-events: none;
+  z-index: 5;
+}
+
+

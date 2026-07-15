@@ -1,0 +1,211 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px;
+  gap: 20px;
+}
+
+.card {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Resources row */
+.resourcesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.resBox {
+  display: flex;
+  flex-direction: column;
+}
+
+.resLabel {
+  font-size: 11px;
+  color: #7b8580;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.resVal {
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.playerVal {
+  color: var(--player-color);
+}
+
+.aiVal {
+  color: var(--ai-color);
+}
+
+/* Turn status */
+.turnHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.turnTitle {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.turnNum {
+  font-size: 13px;
+  color: #a0a8a3;
+  background-color: rgba(255, 255, 255, 0.06);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.currentPlayerBadge {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+
+.playerActive {
+  background-color: rgba(92, 131, 116, 0.15);
+  border: 1px solid rgba(92, 131, 116, 0.3);
+  color: var(--player-color);
+  box-shadow: 0 0 10px rgba(92, 131, 116, 0.1);
+}
+
+.aiActive {
+  background-color: rgba(184, 92, 92, 0.15);
+  border: 1px solid rgba(184, 92, 92, 0.3);
+  color: var(--ai-color);
+  box-shadow: 0 0 10px rgba(184, 92, 92, 0.1);
+}
+
+.btnEndTurn {
+  width: 100%;
+  background: var(--player-color);
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.btnEndTurn:hover:not(:disabled) {
+  background-color: #6d9c8a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(92, 131, 116, 0.3);
+}
+
+.btnEndTurn:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+}
+
+/* Action selection */
+.actionsCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.actionsTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #7b8580;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.actionButtonsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.btnAction {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.btnAction:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btnActionActive {
+  background-color: rgba(229, 176, 97, 0.15) !important;
+  border-color: var(--gold-color) !important;
+  color: var(--gold-color);
+}
+
+.btnAction:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Log history */
+.logContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 180px;
+  overflow: hidden;
+}
+
+.logTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #7b8580;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.logList {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.logItem {
+  font-size: 12px;
+  color: #a0a8a3;
+  background-color: rgba(0, 0, 0, 0.12);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border-left: 3px solid rgba(255, 255, 255, 0.1);
+  animation: slideIn 0.2s ease-out;
+  line-height: 1.4;
+}
+
+.logItem:first-child {
+  border-left-color: var(--gold-color);
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.02);
+}

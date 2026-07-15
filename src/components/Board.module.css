@@ -1,0 +1,22 @@
+.boardContainer {
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  background-color: #1a1e1b;
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  margin: 0 auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 4px;
+  background-color: #121513;
+  border-radius: 6px;
+  padding: 4px;
+  overflow: hidden;
+}
