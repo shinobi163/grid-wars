@@ -143,6 +143,101 @@ export const Sidebar: React.FC = () => {
               </span>
             </div>
           </div>
+
+          {/* Action Economy Buttons */}
+          {isPlayerTurn && selectedUnit.owner === 'player' && !selectedUnit.hasActed && !winner && (
+            <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
+              <div style={{ fontSize: '10px', fontWeight: 600, color: '#7b8580', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
+                Select Action
+              </div>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setAction(activeAction === 'move' ? null : 'move')}
+                  style={{
+                    flex: '1 1 calc(50% - 3px)',
+                    padding: '6px 8px',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor: activeAction === 'move' ? 'rgba(229,176,97,0.2)' : 'rgba(0,0,0,0.3)',
+                    color: activeAction === 'move' ? 'var(--gold-color)' : '#ffffff',
+                    borderColor: activeAction === 'move' ? 'var(--gold-color)' : 'rgba(255,255,255,0.1)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  🥾 Move
+                </button>
+                <button
+                  onClick={() => setAction(activeAction === 'attack' ? null : 'attack')}
+                  style={{
+                    flex: '1 1 calc(50% - 3px)',
+                    padding: '6px 8px',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor: activeAction === 'attack' ? 'rgba(255,59,48,0.2)' : 'rgba(0,0,0,0.3)',
+                    color: activeAction === 'attack' ? '#ff3b30' : '#ffffff',
+                    borderColor: activeAction === 'attack' ? '#ff3b30' : 'rgba(255,255,255,0.1)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  ⚔️ Attack
+                </button>
+                {CLASSES[selectedUnit.type].canHeal && (
+                  <button
+                    onClick={() => setAction(activeAction === 'heal' ? null : 'heal')}
+                    style={{
+                      flex: '1 1 calc(50% - 3px)',
+                      padding: '6px 8px',
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      backgroundColor: activeAction === 'heal' ? 'rgba(76,217,100,0.2)' : 'rgba(0,0,0,0.3)',
+                      color: activeAction === 'heal' ? '#4cd964' : '#ffffff',
+                      borderColor: activeAction === 'heal' ? '#4cd964' : 'rgba(255,255,255,0.1)',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    💚 Heal
+                  </button>
+                )}
+                {CLASSES[selectedUnit.type].canClearObstacles && (
+                  <button
+                    onClick={() => setAction(activeAction === 'clear' ? null : 'clear')}
+                    style={{
+                      flex: '1 1 calc(50% - 3px)',
+                      padding: '6px 8px',
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      backgroundColor: activeAction === 'clear' ? 'rgba(255,204,0,0.2)' : 'rgba(0,0,0,0.3)',
+                      color: activeAction === 'clear' ? '#ffcc00' : '#ffffff',
+                      borderColor: activeAction === 'clear' ? '#ffcc00' : 'rgba(255,255,255,0.1)',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    🧱 Clear
+                  </button>
+                )}
+              </div>
+              {activeAction && (
+                <div style={{ fontSize: '10px', color: '#a0a8a3', marginTop: '8px', fontStyle: 'italic', textAlign: 'center' }}>
+                  {activeAction === 'move' && 'Click a highlighted green cell to move.'}
+                  {activeAction === 'attack' && 'Click a highlighted red cell to attack.'}
+                  {activeAction === 'heal' && 'Click a highlighted green cell to heal.'}
+                  {activeAction === 'clear' && 'Click an adjacent boulder to clear it.'}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

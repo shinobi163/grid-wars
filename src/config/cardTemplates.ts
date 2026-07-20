@@ -1,7 +1,5 @@
 export type CardType =
-  | 'strike'
   | 'dodge'
-  | 'mead'
   | 'barrage'
   | 'steed'
   | 'enrage'
@@ -30,25 +28,11 @@ export interface StatusEffect {
 }
 
 export const CARD_TEMPLATES: Record<CardType, Omit<Card, 'id'>> = {
-  strike: {
-    type: 'strike',
-    category: 'instant',
-    name: 'Strike!',
-    description: 'Trigger an extra attack with a unit (select attacker, then target).',
-    goldCost: 0
-  },
   dodge: {
     type: 'dodge',
     category: 'instant',
     name: 'Dodge!',
     description: 'Private: Give a unit a shield to block the next attack.',
-    goldCost: 0
-  },
-  mead: {
-    type: 'mead',
-    category: 'instant',
-    name: 'Mead!',
-    description: 'Restore 3 HP to a friendly unit.',
     goldCost: 0
   },
   barrage: {
@@ -115,13 +99,12 @@ export const CARD_TEMPLATES: Record<CardType, Omit<Card, 'id'>> = {
     goldCost: 0
   }
 };
+
 export type DeckComposition = Record<string, number>;
 
-export const DECK_TARGET_SIZE = 46;
+export const DECK_TARGET_SIZE = 23;
 
 export const CARD_DEFAULTS: DeckComposition = {
-  strike: 15,
-  mead: 8,
   dodge: 8,
   ambush: 2,
   secondwind: 1,
@@ -131,8 +114,6 @@ export const CARD_DEFAULTS: DeckComposition = {
 };
 
 export const CARD_CAPS: DeckComposition = {
-  strike: 30,
-  mead: 16,
   dodge: 16,
   ambush: 4,
   secondwind: 2,
@@ -141,11 +122,9 @@ export const CARD_CAPS: DeckComposition = {
   siege: 8,
 };
 
-// 46 Card predictable deck composition (backward compatible default)
+// 23 Card predictable deck composition (backward compatible default)
 export const DECK_COMPOSITION: Record<CardType, number> = {
-  strike: 15,
   dodge: 8,
-  mead: 8,
   barrage: 0,
   steed: 0,
   enrage: 4,
@@ -157,7 +136,7 @@ export const DECK_COMPOSITION: Record<CardType, number> = {
   siege: 4
 };
 
-// Generates a new shuffled deck of 46 cards, using custom composition if provided
+// Generates a new shuffled deck of 23 cards, using custom composition if provided
 export function generateDeck(customComposition?: Record<string, number>): CardType[] {
   const deck: CardType[] = [];
   const comp = customComposition || DECK_COMPOSITION;

@@ -44,8 +44,6 @@ export interface GameState {
   playerHand: Card[];
   aiHand: Card[];
   selectedCardId: string | null;
-  cardTargetSourceId: string | null; // Attacker source unit for Strike card
-  attacksThisTurn: number;
   
   // Visual Feedback State
   floatingTexts: FloatingText[];
@@ -66,9 +64,7 @@ export interface GameState {
   
   // Card Actions
   selectCard: (cardId: string | null) => void;
-  setCardTargetSource: (unitId: string | null) => void;
   playCard: (cardId: string, targetUnitId: string) => void;
-  playStrikeCard: (cardId: string, attackerId: string, defenderId: string) => void;
   drawCard: (owner: 'player' | 'ai') => void;
   drawUpTo: (owner: 'player' | 'ai') => void;
   
@@ -131,8 +127,6 @@ export const useGameStore = create<GameState>((set, get) => ({
   playerHand: [],
   aiHand: [],
   selectedCardId: null,
-  cardTargetSourceId: null,
-  attacksThisTurn: 0,
   
   // Feedback State
   floatingTexts: [],
@@ -371,8 +365,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       playerHand: [],
       aiHand: [],
       selectedCardId: null,
-      cardTargetSourceId: null,
-      attacksThisTurn: 0,
       hasCycledThisTurn: false,
       
       // Feedback states
@@ -393,11 +385,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   selectUnit: (unitId) => {
-    set({ selectedUnitId: unitId, activeAction: null, selectedCardId: null, cardTargetSourceId: null });
+    set({ selectedUnitId: unitId, activeAction: null, selectedCardId: null });
   },
 
   setAction: (action) => {
-    set({ activeAction: action, selectedCardId: null, cardTargetSourceId: null });
+    set({ activeAction: action, selectedCardId: null });
   },
 
   moveUnit: (unitId, toX, toY) => {
@@ -731,11 +723,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // --- CARD SYSTEM ACTIONS ---
   selectCard: (cardId) => {
-    set({ selectedCardId: cardId, activeAction: null, cardTargetSourceId: null });
-  },
-
-  setCardTargetSource: (unitId) => {
-    set({ cardTargetSourceId: unitId });
+    set({ selectedCardId: cardId, activeAction: null });
   },
 
   drawCard: (owner) => {
@@ -827,17 +815,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
         break;
 
-      case 'mead':
-        const maxHp = getMaxHp(targetUnit);
-        updatedUnits = units.map(u => {
-          if (u.id === targetUnitId) {
-            return { ...u, hp: Math.min(maxHp, u.hp + 3) };
-          }
-          return u;
-        });
-        showLogMsg = `Played Mead! on ${UNIT_REGISTRY[targetUnit.type].displayName}: Restored 3 HP.`;
-        get().addFloatingText(targetUnit.x, targetUnit.y, '+3 HP', 'heal');
-        break;
+
 
       case 'barrage':
         // Caster unit takes 2 recoil damage
@@ -1016,8 +994,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         ...state.resources,
         [currentPlayer]: goldPool - card.goldCost
       },
-      selectedCardId: null,
-      cardTargetSourceId: null
+      selectedCardId: null
     }));
 
     const isSecretCard = card.type === 'dodge' || card.type === 'secondwind' || card.type === 'ambush';
@@ -1040,130 +1017,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  playStrikeCard: (cardId, attackerId, defenderId) => {
-    const { currentPlayer, playerHand, aiHand, units, grid, resources, attacksThisTurn } = get();
-    const isPlayer = currentPlayer === 'player';
-    const hand = isPlayer ? playerHand : aiHand;
-    const card = hand.find(c => c.id === cardId);
-    const attacker = units.find(u => u.id === attackerId);
-    const defender = units.find(u => u.id === defenderId);
 
-    if (!card || !attacker || !defender) return;
-
-    if (attacksThisTurn >= 1) {
-      get().addLog(`${isPlayer ? 'Player' : 'AI'} can only attack once per turn!`);
-      return;
-    }
-
-    // Gold cost check
-    const goldPool = resources[currentPlayer];
-    if (goldPool < card.goldCost) {
-      get().addLog(`Not enough Gold to play Strike! (Needs ${card.goldCost}g)`);
-      return;
-    }
-
-    const hasSteed = defender.equipment.some(e => e.type === 'steed');
-    const actualDistance = getManhattanDistance(attacker.x, attacker.y, defender.x, defender.y);
-    const effectiveDistance = hasSteed ? actualDistance + 1 : actualDistance;
-
-    if (!isValidActionRange(attacker, defender.x, defender.y, 'attack')) return;
-
-    const defenderTerrain = grid[defender.y][defender.x].type;
-
-    let updatedUnits = [...units];
-
-    const newHand = hand.filter(c => c.id !== cardId);
-    const handKey = isPlayer ? 'playerHand' : 'aiHand';
-
-    set(state => ({
-      discardPile: [...state.discardPile, card.type],
-      [handKey]: newHand,
-      resources: {
-        ...state.resources,
-        [currentPlayer]: goldPool - card.goldCost
-      },
-      selectedCardId: null,
-      cardTargetSourceId: null,
-      attacksThisTurn: 1
-    }));
-
-    if (defender.hasMissedBuff) {
-      updatedUnits = units.map(u => {
-        if (u.id === defenderId) {
-          return { ...u, hasMissedBuff: false };
-        }
-        if (u.id === attackerId) {
-          return { ...u, hasAmbushBuff: false }; // Ambush broken by attack!
-        }
-        return u;
-      });
-
-      set({ units: updatedUnits, selectedUnitId: null, activeAction: null });
-      get().addLog(`Played Strike! — Attack Dodged by ${UNIT_REGISTRY[defender.type].displayName}.`);
-      get().addFloatingText(defender.x, defender.y, 'DODGED!', 'status');
-      if (attacker.owner === 'ai') {
-        get().addRecap(`AI played Strike! on ${UNIT_REGISTRY[defender.type].displayName} but it was DODGED.`);
-      }
-      return;
-    }
-
-    const result = resolveCombat({
-      attacker,
-      defender,
-      distance: effectiveDistance,
-      defenderTerrain
-    });
-
-    updatedUnits = units.map(u => {
-      if (u.id === defenderId) {
-        let afterDamage = damageUnitHelper(u, result.damageDealt, get().addLog, get().addFloatingText);
-        return {
-          ...afterDamage,
-          shieldActive: result.shieldBlocked ? false : u.shieldActive
-        };
-      }
-      if (u.id === attackerId) {
-        let afterDamage = damageUnitHelper(u, result.retaliateDamage, get().addLog, get().addFloatingText);
-        return {
-          ...afterDamage,
-          hasAmbushBuff: false // Ambush broken by attack!
-        };
-      }
-      return u;
-    });
-
-    updatedUnits = updatedUnits.filter(u => u.hp > 0);
-
-    set({
-      units: updatedUnits,
-      selectedUnitId: null,
-      activeAction: null
-    });
-
-    const strikeMsg = `Played Strike! — ${result.logMessage}`;
-    get().addLog(strikeMsg);
-    get().addFloatingText(defender.x, defender.y, `-${result.damageDealt}`, 'damage');
-
-    if (attacker.owner === 'ai') {
-      get().addRecap(strikeMsg);
-    }
-
-    if (result.retaliateDamage > 0) {
-      get().addLog(`${UNIT_REGISTRY[attacker.type].displayName} took ${result.retaliateDamage} retaliatory damage!`);
-      get().addFloatingText(attacker.x, attacker.y, `-${result.retaliateDamage}`, 'damage');
-    }
-
-    const playerAlive = updatedUnits.some(u => u.owner === 'player');
-    const aiAlive = updatedUnits.some(u => u.owner === 'ai');
-
-    if (!playerAlive) {
-      set({ winner: 'ai' });
-      get().addLog('Defeat! The AI has eliminated all your units.');
-    } else if (!aiAlive) {
-      set({ winner: 'player' });
-      get().addLog('Victory! You have eliminated all enemy units.');
-    }
-  },
 
   endTurn: () => {
     const { currentPlayer, units, grid, resources, turnNumber } = get();
@@ -1219,11 +1073,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       selectedUnitId: null,
       activeAction: null,
       selectedCardId: null,
-      cardTargetSourceId: null,
       turnNumber: nextPlayer === 'player' ? turnNumber + 1 : turnNumber,
       turnRecap: nextPlayer === 'player' ? [] : state.turnRecap,
       showTurnBanner: nextPlayer,
-      attacksThisTurn: 0,
       hasCycledThisTurn: false
     }));
 

@@ -15,14 +15,14 @@ export const Board: React.FC = () => {
     selectUnit,
     setAction,
     moveUnit,
+    attackUnit,
+    healUnit,
+    clearObstacle,
     winner,
     floatingTexts,
     selectedCardId,
     selectCard,
     playCard,
-    playStrikeCard,
-    cardTargetSourceId,
-    setCardTargetSource,
     playerHand,
     resources,
     turnNumber
@@ -56,87 +56,56 @@ export const Board: React.FC = () => {
 
     // Card playing takes precedence!
     if (selectedCardId && selectedCard) {
-      if (selectedCard.type === 'strike') {
-        if (cardTargetSourceId === null) {
-          // Select friendly attacker
-          if (unitAtCell && unitAtCell.owner === 'player') {
-            setCardTargetSource(unitAtCell.id);
-          } else {
-            selectCard(null); // Cancel
-          }
-        } else {
-          // Select enemy target
-          const attacker = units.find(u => u.id === cardTargetSourceId);
-          // Check if attacker and target exist and are valid range (respecting invisibility)
-          if (attacker && unitAtCell && unitAtCell.owner === 'ai' && !unitAtCell.hasAmbushBuff && isValidActionRange(attacker, x, y, 'attack')) {
-            playStrikeCard(selectedCardId, cardTargetSourceId, unitAtCell.id);
-          } else {
-            selectCard(null); // Cancel
-          }
-        }
+      if (unitAtCell && unitAtCell.owner === 'player') {
+        playCard(selectedCardId, unitAtCell.id);
       } else {
-        // Single target friendly cards (Mead, Dodge, Steed, Barrage, Enrage, Fortify, Saddle, SecondWind, Ambush, Command, Siege)
-        if (unitAtCell && unitAtCell.owner === 'player') {
-          playCard(selectedCardId, unitAtCell.id);
-        } else {
-          selectCard(null); // Cancel
-        }
+        selectCard(null); // Cancel
       }
       return;
     }
 
-    // Grid selection & movement logic
-    if (!selectedUnit) {
-      // No unit selected: select clicked unit if it's friendly (or AI for viewing stats)
-      if (unitAtCell) {
-        // Only select AI units if they are NOT invisible!
-        if (unitAtCell.owner === 'player' || !unitAtCell.hasAmbushBuff) {
-          selectUnit(unitAtCell.id);
-          if (unitAtCell.owner === 'player' && !unitAtCell.hasActed) {
-            setAction('move');
-          }
-        }
-      }
-      return;
-    }
-
-    // Clicked on a unit (shift selection or toggle)
-    if (unitAtCell) {
-      // Respect AI invisibility
-      if (unitAtCell.owner === 'ai' && unitAtCell.hasAmbushBuff) {
-        selectUnit(null);
+    // Default Action execution
+    if (selectedUnit && selectedUnit.owner === 'player' && !selectedUnit.hasActed) {
+      if (activeAction === 'move' && isCellReachable(x, y) && !unitAtCell) {
+        moveUnit(selectedUnit.id, x, y);
         return;
       }
 
-      if (unitAtCell.id !== selectedUnit.id) {
-        // Select different unit
+      if (activeAction === 'attack' && unitAtCell && unitAtCell.owner === 'ai' && !unitAtCell.hasAmbushBuff) {
+        if (isValidActionRange(selectedUnit, x, y, 'attack')) {
+          attackUnit(selectedUnit.id, unitAtCell.id);
+          return;
+        }
+      }
+
+      if (activeAction === 'heal' && unitAtCell && unitAtCell.owner === 'player') {
+        if (isValidActionRange(selectedUnit, x, y, 'heal')) {
+          healUnit(selectedUnit.id, unitAtCell.id);
+          return;
+        }
+      }
+
+      if (activeAction === 'clear' && cell.hasObstacle) {
+        const dist = getManhattanDistance(selectedUnit.x, selectedUnit.y, x, y);
+        if (dist === 1) {
+          clearObstacle(selectedUnit.id, x, y);
+          return;
+        }
+      }
+    }
+
+    // Grid selection & shift selection logic
+    if (unitAtCell) {
+      if (unitAtCell.owner === 'player' || !unitAtCell.hasAmbushBuff) {
         selectUnit(unitAtCell.id);
         if (unitAtCell.owner === 'player' && !unitAtCell.hasActed) {
           setAction('move');
         }
-      } else {
-        // Toggle move overlay for currently selected friendly unit
-        if (selectedUnit.owner === 'player' && !selectedUnit.hasActed) {
-          setAction(activeAction === 'move' ? null : 'move');
-        }
       }
-      return;
-    }
-
-    // Clicked on empty cell
-    if (selectedUnit.owner === 'player' && !selectedUnit.hasActed && activeAction === 'move' && isCellReachable(x, y)) {
-      // Execute movement!
-      moveUnit(selectedUnit.id, x, y);
     } else {
-      // Clicked empty tile that isn't reachable: deselect
       selectUnit(null);
     }
   };
-
-  const strikeAttacker = useMemo(() => {
-    if (!cardTargetSourceId) return null;
-    return units.find(u => u.id === cardTargetSourceId) || null;
-  }, [units, cardTargetSourceId]);
 
   return (
     <div className={styles.boardContainer}>
@@ -159,22 +128,21 @@ export const Board: React.FC = () => {
             const unit = getUnitAt(x, y, units);
             const isReachable = isCellReachable(x, y);
 
-            // Card highlight rules
+            // Card / Action highlight rules
             let isValidAttackTarget = false;
             let isValidHealTarget = false;
+            let isValidClearTarget = false;
 
             if (selectedCardId && selectedCard) {
-              if (selectedCard.type === 'strike') {
-                if (cardTargetSourceId === null) {
-                  // Highlight valid attacker source units (all player units) in green
-                  isValidHealTarget = !!unit && unit.owner === 'player';
-                } else if (strikeAttacker) {
-                  // Highlight valid attack targets in range in red (respecting invisibility)
-                  isValidAttackTarget = !!unit && unit.owner === 'ai' && !unit.hasAmbushBuff && isValidActionRange(strikeAttacker, x, y, 'attack');
-                }
-              } else {
-                // Highlight friendly units in green for single-target friendly cards
-                isValidHealTarget = !!unit && unit.owner === 'player';
+              // Highlight friendly units in green for single-target friendly cards
+              isValidHealTarget = !!unit && unit.owner === 'player';
+            } else if (selectedUnit && !selectedUnit.hasActed && selectedUnit.owner === 'player') {
+              if (activeAction === 'attack') {
+                isValidAttackTarget = !!unit && unit.owner === 'ai' && !unit.hasAmbushBuff && isValidActionRange(selectedUnit, x, y, 'attack');
+              } else if (activeAction === 'heal') {
+                isValidHealTarget = !!unit && unit.owner === 'player' && isValidActionRange(selectedUnit, x, y, 'heal');
+              } else if (activeAction === 'clear') {
+                isValidClearTarget = cell.hasObstacle && getManhattanDistance(selectedUnit.x, selectedUnit.y, x, y) === 1;
               }
             }
 
@@ -186,8 +154,8 @@ export const Board: React.FC = () => {
                 isReachable={isReachable}
                 isValidAttackTarget={isValidAttackTarget}
                 isValidHealTarget={isValidHealTarget}
-                isValidClearTarget={false}
-                isSelected={selectedUnitId === (unit ? unit.id : null) || cardTargetSourceId === (unit ? unit.id : null)}
+                isValidClearTarget={isValidClearTarget}
+                isSelected={selectedUnitId === (unit ? unit.id : null)}
                 onCellClick={() => handleCellClick(x, y)}
               />
             );
