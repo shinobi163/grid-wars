@@ -65,11 +65,11 @@ export const Cell: React.FC<CellProps> = ({
 
   const renderUnitIcon = (unitType: string) => {
     switch (unitType) {
-      case 'offense':
+      case 'swordsman':
         return <OffenseIcon size={26} />;
-      case 'support':
+      case 'archerMedic':
         return <SupportIcon size={26} />;
-      case 'gatherer':
+      case 'scoutMiner':
         return <GathererIcon size={26} />;
       default:
         return null;

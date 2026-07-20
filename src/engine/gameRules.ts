@@ -1,5 +1,6 @@
 import { Unit, getMoveRange } from './combatResolver';
 import { TileType, TERRAIN_REGISTRY } from '../config/terrainRules';
+import { CLASSES } from '../config/unitDefinitions';
 
 export interface Cell {
   x: number;
@@ -94,7 +95,6 @@ export function getReachableCells(
   });
 }
 
-// Validate if attack/heal range is valid
 export function isValidActionRange(
   attacker: Unit,
   targetX: number,
@@ -102,27 +102,23 @@ export function isValidActionRange(
   actionType: 'attack' | 'heal'
 ): boolean {
   const dist = getManhattanDistance(attacker.x, attacker.y, targetX, targetY);
+  const classDef = CLASSES[attacker.type];
 
   if (actionType === 'heal') {
-    if (attacker.type === 'support') {
-      // Support can heal at range
+    if (classDef.canHeal) {
       const hasLongbow = attacker.unlockedUpgrades.includes('sup_rng_2');
-      const maxRange = hasLongbow ? 4 : 3;
-      // Healer can heal adjacent cells (range 1) and up to maxRange
+      const maxRange = classDef.healRange + (hasLongbow ? 1 : 0);
       return dist >= 1 && dist <= maxRange;
     }
-    // Other classes cannot heal
     return false;
   }
 
   // Combat range validation
-  if (attacker.type === 'support') {
-    const hasLongbow = attacker.unlockedUpgrades.includes('sup_rng_2');
-    const maxRange = hasLongbow ? 4 : 3;
-    // Ranged support cannot attack adjacent cells (Dead Zone at dist 1)
-    return dist >= 2 && dist <= maxRange;
+  if (!classDef.canAttackAdjacent && dist === 1) {
+    return false; // Dead Zone
   }
 
-  // Melee units (Offense, Gatherer) can only attack adjacent cells
-  return dist === 1;
+  const hasLongbow = attacker.unlockedUpgrades.includes('sup_rng_2');
+  const maxRange = classDef.attackRange + (hasLongbow ? 1 : 0);
+  return dist >= (classDef.canAttackAdjacent ? 1 : 2) && dist <= maxRange;
 }

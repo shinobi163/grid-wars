@@ -10,7 +10,9 @@ export const CardsHand: React.FC = () => {
     selectedCardId,
     selectCard,
     currentPlayer,
-    winner
+    winner,
+    hasCycledThisTurn,
+    cycleCard
   } = useGameStore();
 
   const isPlayerTurn = currentPlayer === 'player';
@@ -50,7 +52,22 @@ export const CardsHand: React.FC = () => {
                 `}
                 onClick={() => handleCardClick(card.id)}
               >
-                <div className={styles.cardName}>{card.name}</div>
+                <div className={styles.cardName}>
+                  <span>{card.name}</span>
+                  {isPlayerTurn && !winner && (
+                    <button
+                      className={styles.cycleBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        cycleCard(card.id);
+                      }}
+                      disabled={hasCycledThisTurn}
+                      title={hasCycledThisTurn ? "Already cycled a card this turn" : "Discard this card and draw a new one"}
+                    >
+                      🔄
+                    </button>
+                  )}
+                </div>
                 <div className={styles.cardDesc}>{card.description}</div>
                 <div className={styles.cardFooter}>
                   {card.category === 'equipment' ? 'Equipment' : 'Instant'}

@@ -3,7 +3,7 @@ import styles from './Sidebar.module.css';
 import { useGameStore } from '../store/gameStore';
 import { GoldIcon } from './UnitIcons';
 import { getManhattanDistance } from '../engine/gameRules';
-import { UNIT_REGISTRY } from '../config/unitDefinitions';
+import { CLASSES } from '../config/unitDefinitions';
 import { getMaxHp, getAttackPower, getMoveRange } from '../engine/combatResolver';
 
 const BootIconTiny: React.FC<{ size?: number; className?: string }> = ({ size = 10, className }) => (
@@ -103,7 +103,7 @@ export const Sidebar: React.FC = () => {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#ffffff' }}>
-              {UNIT_REGISTRY[selectedUnit.type].displayName}
+              {CLASSES[selectedUnit.type].name}
             </span>
             <span
               style={{

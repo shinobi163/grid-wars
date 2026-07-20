@@ -1,5 +1,3 @@
-import { UnitType } from './unitDefinitions';
-
 export interface UpgradeNode {
   id: string;
   name: string;
@@ -20,8 +18,8 @@ export interface UpgradeTree {
   tier3: UpgradeNode[];
 }
 
-export const UPGRADE_TREES: Record<UnitType, UpgradeTree> = {
-  offense: {
+export const UPGRADE_TREES: Record<string, UpgradeTree> = {
+  swordsman: {
     tier1: [
       { id: 'off_hp_1', name: 'Hardened Armor', description: '+3 Max HP', cost: 5, statBonus: { maxHp: 3 } },
       { id: 'off_mov_1', name: 'Reinforced Boots', description: '+1 Move Range', cost: 5, statBonus: { moveRange: 1 } }
@@ -34,20 +32,20 @@ export const UPGRADE_TREES: Record<UnitType, UpgradeTree> = {
       { id: 'off_act_3', name: 'Double Action', description: 'Move and act in one turn', cost: 15, statBonus: {}, specialEffect: 'doubleAction' }
     ]
   },
-  support: {
+  archerMedic: {
     tier1: [
       { id: 'sup_hp_1', name: 'Alchemist Cloak', description: '+3 Max HP', cost: 5, statBonus: { maxHp: 3 } },
       { id: 'sup_mov_1', name: 'Light Sandals', description: '+1 Move Range', cost: 5, statBonus: { moveRange: 1 } }
     ],
     tier2: [
-      { id: 'sup_rng_2', name: 'Longbow', description: '+1 Ranged Attack & Heal Range', cost: 10, statBonus: {}, specialEffect: 'camouflage' }, // let's change specialEffect or use it to increase range
+      { id: 'sup_rng_2', name: 'Longbow', description: '+1 Ranged Attack & Heal Range', cost: 10, statBonus: {}, specialEffect: 'camouflage' },
       { id: 'sup_hel_2', name: 'Holy Catalyst', description: '+3 Heal Power', cost: 10, statBonus: { healPower: 3 } }
     ],
     tier3: [
       { id: 'sup_act_3', name: 'Double Action', description: 'Move and act in one turn', cost: 15, statBonus: {}, specialEffect: 'doubleAction' }
     ]
   },
-  gatherer: {
+  scoutMiner: {
     tier1: [
       { id: 'gat_hp_1', name: 'Hard Hat', description: '+3 Max HP', cost: 5, statBonus: { maxHp: 3 } },
       { id: 'gat_mov_1', name: 'Hiking Boots', description: '+1 Move Range', cost: 5, statBonus: { moveRange: 1 } }
@@ -59,5 +57,8 @@ export const UPGRADE_TREES: Record<UnitType, UpgradeTree> = {
     tier3: [
       { id: 'gat_shd_3', name: 'Guardian Shield', description: 'Blocks first attack in a turn', cost: 15, statBonus: {}, specialEffect: 'guardianShield' }
     ]
-  }
+  },
+  get offense() { return this.swordsman; },
+  get support() { return this.archerMedic; },
+  get gatherer() { return this.scoutMiner; }
 };

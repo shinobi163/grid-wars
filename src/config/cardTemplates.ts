@@ -115,29 +115,55 @@ export const CARD_TEMPLATES: Record<CardType, Omit<Card, 'id'>> = {
     goldCost: 0
   }
 };
+export type DeckComposition = Record<string, number>;
 
-// 46 Card predictable deck composition
-export const DECK_COMPOSITION: Record<CardType, number> = {
+export const DECK_TARGET_SIZE = 46;
+
+export const CARD_DEFAULTS: DeckComposition = {
   strike: 15,
-  dodge: 5,
-  mead: 4,
-  barrage: 3,
-  steed: 2,
-  enrage: 5,
-  fortify: 4,
-  saddle: 4,
+  mead: 8,
+  dodge: 8,
+  ambush: 2,
   secondwind: 1,
-  ambush: 1,
-  command: 1,
-  siege: 1
+  saddle: 4,
+  enrage: 4,
+  siege: 4,
 };
 
-// Generates a new shuffled deck of 46 cards
-export function generateDeck(): CardType[] {
+export const CARD_CAPS: DeckComposition = {
+  strike: 30,
+  mead: 16,
+  dodge: 16,
+  ambush: 4,
+  secondwind: 2,
+  saddle: 8,
+  enrage: 8,
+  siege: 8,
+};
+
+// 46 Card predictable deck composition (backward compatible default)
+export const DECK_COMPOSITION: Record<CardType, number> = {
+  strike: 15,
+  dodge: 8,
+  mead: 8,
+  barrage: 0,
+  steed: 0,
+  enrage: 4,
+  fortify: 0,
+  saddle: 4,
+  secondwind: 1,
+  ambush: 2,
+  command: 0,
+  siege: 4
+};
+
+// Generates a new shuffled deck of 46 cards, using custom composition if provided
+export function generateDeck(customComposition?: Record<string, number>): CardType[] {
   const deck: CardType[] = [];
+  const comp = customComposition || DECK_COMPOSITION;
   
-  (Object.keys(DECK_COMPOSITION) as CardType[]).forEach(type => {
-    const count = DECK_COMPOSITION[type];
+  (Object.keys(comp) as CardType[]).forEach(type => {
+    const count = comp[type];
     for (let i = 0; i < count; i++) {
       deck.push(type);
     }

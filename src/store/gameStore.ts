@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { UnitType, UNIT_REGISTRY } from '../config/unitDefinitions';
-import { UPGRADE_TREES, UpgradeNode } from '../config/upgradeTrees';
+import { UnitType, UNIT_REGISTRY, CLASSES } from '../config/unitDefinitions';
+import { UpgradeNode } from '../config/upgradeTrees';
 import { TileType, TERRAIN_REGISTRY } from '../config/terrainRules';
-import { Card, CardType, CARD_TEMPLATES, generateDeck } from '../config/cardTemplates';
+import { Card, CardType, CARD_TEMPLATES, generateDeck, CARD_DEFAULTS } from '../config/cardTemplates';
 import {
   Unit,
   getMaxHp,
@@ -72,6 +72,14 @@ export interface GameState {
   drawCard: (owner: 'player' | 'ai') => void;
   drawUpTo: (owner: 'player' | 'ai') => void;
   
+  // Setup & Custom systems
+  gameState: 'setup' | 'playing';
+  customDeckComposition: Record<string, number>;
+  hasCycledThisTurn: boolean;
+  setDeckComposition: (comp: Record<string, number>) => void;
+  startGame: () => void;
+  cycleCard: (cardId: string) => void;
+  
   // Feedback Actions
   addFloatingText: (x: number, y: number, text: string, type: 'damage' | 'heal' | 'status') => void;
   removeFloatingText: (id: string) => void;
@@ -113,6 +121,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   actionLog: [],
   turnNumber: 1,
   gameMode: 'ai',
+  gameState: 'setup',
+  customDeckComposition: CARD_DEFAULTS,
+  hasCycledThisTurn: false,
   
   // Card System State
   deck: [],
@@ -212,11 +223,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     const units: Unit[] = [
       {
         id: 'player_offense',
-        type: 'offense',
+        type: 'swordsman',
         owner: 'player',
         x: 2,
         y: 6,
-        hp: UNIT_REGISTRY.offense.maxHp,
+        hp: CLASSES.swordsman.hp,
         hasActed: false,
         unlockedUpgrades: [],
         shieldActive: false,
@@ -231,11 +242,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       },
       {
         id: 'player_support',
-        type: 'support',
+        type: 'archerMedic',
         owner: 'player',
         x: 3,
         y: 6,
-        hp: UNIT_REGISTRY.support.maxHp,
+        hp: CLASSES.archerMedic.hp,
         hasActed: false,
         unlockedUpgrades: [],
         shieldActive: false,
@@ -250,11 +261,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       },
       {
         id: 'player_gatherer',
-        type: 'gatherer',
+        type: 'scoutMiner',
         owner: 'player',
         x: 4,
         y: 6,
-        hp: UNIT_REGISTRY.gatherer.maxHp,
+        hp: CLASSES.scoutMiner.hp,
         hasActed: false,
         unlockedUpgrades: [],
         shieldActive: false,
@@ -269,11 +280,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       },
       {
         id: 'ai_offense',
-        type: 'offense',
+        type: 'swordsman',
         owner: 'ai',
         x: 5,
         y: 1,
-        hp: UNIT_REGISTRY.offense.maxHp,
+        hp: CLASSES.swordsman.hp,
         hasActed: false,
         unlockedUpgrades: [],
         shieldActive: false,
@@ -288,11 +299,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       },
       {
         id: 'ai_support',
-        type: 'support',
+        type: 'archerMedic',
         owner: 'ai',
         x: 4,
         y: 1,
-        hp: UNIT_REGISTRY.support.maxHp,
+        hp: CLASSES.archerMedic.hp,
         hasActed: false,
         unlockedUpgrades: [],
         shieldActive: false,
@@ -307,11 +318,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       },
       {
         id: 'ai_gatherer',
-        type: 'gatherer',
+        type: 'scoutMiner',
         owner: 'ai',
         x: 3,
         y: 1,
-        hp: UNIT_REGISTRY.gatherer.maxHp,
+        hp: CLASSES.scoutMiner.hp,
         hasActed: false,
         unlockedUpgrades: [],
         shieldActive: false,
@@ -326,7 +337,21 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
     ];
 
-    const fullDeck = generateDeck();
+    const customComp = get().customDeckComposition;
+    const fullDeck = generateDeck({
+      strike: customComp.strike || 0,
+      dodge: customComp.dodge || 0,
+      mead: customComp.mead || 0,
+      barrage: 0,
+      steed: 0,
+      enrage: customComp.enrage || 0,
+      fortify: 0,
+      saddle: customComp.saddle || 0,
+      secondwind: customComp.secondwind || 0,
+      ambush: customComp.ambush || 0,
+      command: 0,
+      siege: customComp.siege || 0
+    });
     
     set({
       grid,
@@ -348,6 +373,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       selectedCardId: null,
       cardTargetSourceId: null,
       attacksThisTurn: 0,
+      hasCycledThisTurn: false,
       
       // Feedback states
       floatingTexts: [],
@@ -610,6 +636,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     const unit = units.find(u => u.id === unitId);
     if (!unit || unit.hasActed) return;
 
+    const classDef = CLASSES[unit.type];
+    if (!classDef.canClearObstacles) return;
+
     const dist = getManhattanDistance(unit.x, unit.y, cellX, cellY);
     if (dist !== 1 || !grid[cellY][cellX].hasObstacle) return;
 
@@ -655,7 +684,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const unit = units.find(u => u.id === unitId);
     if (!unit || unit.owner !== currentPlayer) return;
 
-    const tree = UPGRADE_TREES[unit.type];
+    const tree = CLASSES[unit.type].upgradeTree;
     const allNodes = [...tree.tier1, ...tree.tier2, ...tree.tier3];
     const upgrade = allNodes.find(node => node.id === upgradeId);
     if (!upgrade) return;
@@ -1153,11 +1182,12 @@ export const useGameStore = create<GameState>((set, get) => ({
         };
       }
 
-      if (u.owner === activePlayer && u.type === 'gatherer') {
+      const classDef = CLASSES[u.type];
+      if (u.owner === activePlayer && classDef.gatherAmount !== undefined) {
         const cell = grid[u.y][u.x];
         if (cell.type === 'resource') {
           const isDeepMining = hasSpecialEffect(u, 'deepMining');
-          goldGathered += isDeepMining ? 5 : 3;
+          goldGathered += isDeepMining ? (classDef.gatherAmount + 2) : classDef.gatherAmount;
         }
       }
 
@@ -1193,7 +1223,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       turnNumber: nextPlayer === 'player' ? turnNumber + 1 : turnNumber,
       turnRecap: nextPlayer === 'player' ? [] : state.turnRecap,
       showTurnBanner: nextPlayer,
-      attacksThisTurn: 0
+      attacksThisTurn: 0,
+      hasCycledThisTurn: false
     }));
 
     if (goldGathered > 0) {
@@ -1213,6 +1244,39 @@ export const useGameStore = create<GameState>((set, get) => ({
         set({ showTurnBanner: null });
       }
     }, 1500);
+  },
+
+  setDeckComposition: (comp) => {
+    set({ customDeckComposition: comp });
+  },
+
+  startGame: () => {
+    set({ gameState: 'playing' });
+    get().initGame('ai');
+  },
+
+  cycleCard: (cardId) => {
+    const { playerHand, discardPile, deck, currentPlayer, hasCycledThisTurn, winner } = get();
+    if (hasCycledThisTurn || currentPlayer !== 'player' || !!winner) return;
+
+    const cardIndex = playerHand.findIndex(c => c.id === cardId);
+    if (cardIndex === -1) return;
+
+    const card = playerHand[cardIndex];
+    const newHand = playerHand.filter(c => c.id !== cardId);
+
+    set(state => ({
+      playerHand: newHand,
+      discardPile: [...state.discardPile, card.type],
+      hasCycledThisTurn: true,
+      selectedCardId: null,
+      cardTargetSourceId: null
+    }));
+
+    // Draw replacement card
+    get().drawCard('player');
+
+    get().addLog(`Cycled ${card.name}: discarded and drew a replacement.`);
   }
 }));
 export default useGameStore;

@@ -1,5 +1,5 @@
-import { UNIT_REGISTRY, UnitType } from '../config/unitDefinitions';
-import { UPGRADE_TREES, UpgradeNode } from '../config/upgradeTrees';
+import { CLASSES, UnitType } from '../config/unitDefinitions';
+import { UpgradeNode } from '../config/upgradeTrees';
 import { TileType, TERRAIN_REGISTRY } from '../config/terrainRules';
 import { Card, StatusEffect } from '../config/cardTemplates';
 
@@ -27,21 +27,24 @@ export interface Unit {
 
 // Helper to get all unlocked upgrade configurations for a unit
 export function getUnlockedUpgradeNodes(unit: Unit): UpgradeNode[] {
-  const tree = UPGRADE_TREES[unit.type];
+  const classDef = CLASSES[unit.type];
+  const tree = classDef.upgradeTree;
   const allNodes = [...tree.tier1, ...tree.tier2, ...tree.tier3];
   return allNodes.filter(node => unit.unlockedUpgrades.includes(node.id));
 }
 
 // Compute dynamic max HP
 export function getMaxHp(unit: Unit): number {
-  const base = UNIT_REGISTRY[unit.type].maxHp;
+  const classDef = CLASSES[unit.type];
+  const base = classDef.hp;
   const bonus = getUnlockedUpgradeNodes(unit).reduce((acc, node) => acc + (node.statBonus.maxHp || 0), 0);
   return base + bonus;
 }
 
 // Compute dynamic attack power (includes Enrage buff)
 export function getAttackPower(unit: Unit): number {
-  const base = UNIT_REGISTRY[unit.type].attackPower;
+  const classDef = CLASSES[unit.type];
+  const base = classDef.attack;
   const bonus = getUnlockedUpgradeNodes(unit).reduce((acc, node) => acc + (node.statBonus.attackPower || 0), 0);
   const buff = unit.hasEnrageBuff ? 2 : 0;
   return base + bonus + buff;
@@ -49,7 +52,8 @@ export function getAttackPower(unit: Unit): number {
 
 // Compute dynamic move range (includes Saddle buff)
 export function getMoveRange(unit: Unit): number {
-  const base = UNIT_REGISTRY[unit.type].moveRange;
+  const classDef = CLASSES[unit.type];
+  const base = classDef.moveRange;
   const bonus = getUnlockedUpgradeNodes(unit).reduce((acc, node) => acc + (node.statBonus.moveRange || 0), 0);
   const buff = unit.hasSaddleBuff ? 1 : 0;
   return base + bonus + buff;
@@ -57,7 +61,9 @@ export function getMoveRange(unit: Unit): number {
 
 // Compute dynamic healing power
 export function getHealPower(unit: Unit): number {
-  const base = unit.type === 'support' ? 3 : 0;
+  const classDef = CLASSES[unit.type];
+  if (!classDef.canHeal) return 0;
+  const base = classDef.healRange; // Archer Medic base heal is 3
   const bonus = getUnlockedUpgradeNodes(unit).reduce((acc, node) => acc + (node.statBonus.healPower || 0), 0);
   return base + bonus;
 }
@@ -84,34 +90,30 @@ export interface CombatResult {
 export function resolveCombat(ctx: CombatContext): CombatResult {
   const { attacker, defender, distance, defenderTerrain } = ctx;
   
+  const attackerClass = CLASSES[attacker.type];
+  const defenderClass = CLASSES[defender.type];
+
   let baseDamage = getAttackPower(attacker);
   let defenseBonus = TERRAIN_REGISTRY[defenderTerrain].defenseBonus;
   
-  const attackerConfig = UNIT_REGISTRY[attacker.type];
-  const defenderConfig = UNIT_REGISTRY[defender.type];
-  
-  const attackerTraits = attackerConfig.traits;
-  const defenderTraits = defenderConfig.traits;
-
   // 1. Ranged Dead-Zone check
-  if (attackerTraits.includes('ranged') && distance === 1) {
+  if (!attackerClass.canAttackAdjacent && distance === 1) {
     return {
       damageDealt: 0,
       retaliateDamage: 0,
       shieldBlocked: false,
-      logMessage: `${attackerConfig.displayName} is too close to attack!`
+      logMessage: `${attackerClass.name} is too close to attack!`
     };
   }
 
   // 2. Melee vs Ranged adjacent bonus
-  if (attackerTraits.includes('melee') && defenderTraits.includes('ranged') && distance === 1) {
+  if (attackerClass.canAttackAdjacent && !defenderClass.canAttackAdjacent && distance === 1) {
     baseDamage += 2;
   }
 
-  // 3. Evasive Scout on Mountain bonus
-  if (defenderTerrain === 'mountain' && defenderTraits.includes('evasive')) {
-    defenseBonus += 2;
-  }
+  // 3. Class-specific Mountain/Terrain defense bonuses
+  const terrainBonus = (defenderClass.terrainBonuses as any)?.[defenderTerrain]?.defenseBonus || 0;
+  defenseBonus += terrainBonus;
 
   // 4. Fortify buff (+2 defense)
   if (defender.hasFortifyBuff) {
@@ -125,7 +127,7 @@ export function resolveCombat(ctx: CombatContext): CombatResult {
       damageDealt: 0,
       retaliateDamage: 0,
       shieldBlocked: true,
-      logMessage: `Attack blocked by ${defenderConfig.displayName}'s Guardian Shield!`
+      logMessage: `Attack blocked by ${defenderClass.name}'s Guardian Shield!`
     };
   }
 
@@ -143,6 +145,6 @@ export function resolveCombat(ctx: CombatContext): CombatResult {
     damageDealt: finalDamage,
     retaliateDamage,
     shieldBlocked: false,
-    logMessage: `${attackerConfig.displayName} attacked ${defenderConfig.displayName} for ${finalDamage} damage (variance: ${variance}).`
+    logMessage: `${attackerClass.name} attacked ${defenderClass.name} for ${finalDamage} damage (variance: ${variance}).`
   };
 }

@@ -1,7 +1,7 @@
 import { GameState, useGameStore } from '../store/gameStore';
 import { Unit, getMaxHp, hasSpecialEffect } from '../engine/combatResolver';
 import { Cell, getManhattanDistance, getReachableCells, isValidActionRange } from '../engine/gameRules';
-import { UPGRADE_TREES } from '../config/upgradeTrees';
+import { CLASSES } from '../config/unitDefinitions';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -37,14 +37,14 @@ export async function runAiTurn(store: GameState) {
         played = true;
       }
     } else if (card.type === 'dodge') {
-      const offenseAlly = currentUnits.find(u => u.owner === 'ai' && u.type === 'offense' && !u.hasMissedBuff);
+      const offenseAlly = currentUnits.find(u => u.owner === 'ai' && u.type === 'swordsman' && !u.hasMissedBuff);
       if (offenseAlly) {
         playCard(card.id, offenseAlly.id);
         played = true;
       }
     } else if (card.type === 'steed') {
       const squishyAlly = currentUnits.find(
-        u => u.owner === 'ai' && (u.type === 'support' || u.type === 'gatherer') && !u.equipment.some(e => e.type === 'steed')
+        u => u.owner === 'ai' && (u.type === 'archerMedic' || u.type === 'scoutMiner') && !u.equipment.some(e => e.type === 'steed')
       );
       if (squishyAlly) {
         playCard(card.id, squishyAlly.id);
@@ -52,7 +52,7 @@ export async function runAiTurn(store: GameState) {
       }
     } else if (card.type === 'barrage') {
       // Plays barrage centered on AI offense if there is an visible player unit near
-      const offenseAlly = currentUnits.find(u => u.owner === 'ai' && u.type === 'offense' && u.hp > 2); // needs > 2 hp to survive recoil
+      const offenseAlly = currentUnits.find(u => u.owner === 'ai' && u.type === 'swordsman' && u.hp > 2); // needs > 2 hp to survive recoil
       if (offenseAlly) {
         const playerUnitNear = currentUnits.some(
           u => u.owner === 'player' && !u.hasAmbushBuff && getManhattanDistance(offenseAlly.x, offenseAlly.y, u.x, u.y) <= 2
@@ -63,19 +63,19 @@ export async function runAiTurn(store: GameState) {
         }
       }
     } else if (card.type === 'enrage') {
-      const offenseAlly = currentUnits.find(u => u.owner === 'ai' && u.type === 'offense' && !u.hasEnrageBuff);
+      const offenseAlly = currentUnits.find(u => u.owner === 'ai' && u.type === 'swordsman' && !u.hasEnrageBuff);
       if (offenseAlly) {
         playCard(card.id, offenseAlly.id);
         played = true;
       }
     } else if (card.type === 'fortify') {
-      const offenseAlly = currentUnits.find(u => u.owner === 'ai' && u.type === 'offense' && !u.hasFortifyBuff);
+      const offenseAlly = currentUnits.find(u => u.owner === 'ai' && u.type === 'swordsman' && !u.hasFortifyBuff);
       if (offenseAlly) {
         playCard(card.id, offenseAlly.id);
         played = true;
       }
     } else if (card.type === 'saddle') {
-      const gathererAlly = currentUnits.find(u => u.owner === 'ai' && u.type === 'gatherer' && !u.hasSaddleBuff);
+      const gathererAlly = currentUnits.find(u => u.owner === 'ai' && u.type === 'scoutMiner' && !u.hasSaddleBuff);
       if (gathererAlly) {
         playCard(card.id, gathererAlly.id);
         played = true;
@@ -87,7 +87,7 @@ export async function runAiTurn(store: GameState) {
         played = true;
       }
     } else if (card.type === 'ambush') {
-      const offenseAlly = currentUnits.find(u => u.owner === 'ai' && u.type === 'offense' && !u.hasAmbushBuff);
+      const offenseAlly = currentUnits.find(u => u.owner === 'ai' && u.type === 'swordsman' && !u.hasAmbushBuff);
       if (offenseAlly) {
         playCard(card.id, offenseAlly.id);
         played = true;
@@ -147,7 +147,7 @@ export async function runAiTurn(store: GameState) {
     if (reachableCells.length > 0) {
       let bestCell: { x: number; y: number } | null = null;
 
-      if (aiUnit.type === 'gatherer') {
+      if (aiUnit.type === 'scoutMiner') {
         const resourceTiles: Cell[] = [];
         currentGrid.forEach(row => row.forEach(cell => {
           if (cell.type === 'resource') resourceTiles.push(cell);
@@ -165,8 +165,8 @@ export async function runAiTurn(store: GameState) {
             });
           });
         }
-      } else if (aiUnit.type === 'support') {
-        const friendlyOffense = currentUnits.find(u => u.owner === 'ai' && u.type === 'offense');
+      } else if (aiUnit.type === 'archerMedic') {
+        const friendlyOffense = currentUnits.find(u => u.owner === 'ai' && u.type === 'swordsman');
         if (friendlyOffense) {
           let minDistance = Infinity;
           reachableCells.forEach(cell => {
@@ -219,7 +219,7 @@ export async function runAiTurn(store: GameState) {
   const aiUnitRefs = postMoveUnits.filter(u => u.owner === 'ai' && u.hp > 0);
 
   for (const u of aiUnitRefs) {
-    const tree = UPGRADE_TREES[u.type];
+    const tree = CLASSES[u.type].upgradeTree;
     
     for (const node of tree.tier1) {
       if (aiGold >= node.cost && !u.unlockedUpgrades.includes(node.id)) {

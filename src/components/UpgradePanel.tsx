@@ -1,8 +1,8 @@
 import React from 'react';
 import styles from './UpgradePanel.module.css';
 import { useGameStore } from '../store/gameStore';
-import { UNIT_REGISTRY } from '../config/unitDefinitions';
-import { UPGRADE_TREES, UpgradeNode } from '../config/upgradeTrees';
+import { CLASSES } from '../config/unitDefinitions';
+import { UpgradeNode } from '../config/upgradeTrees';
 import { getMaxHp, getAttackPower, getMoveRange, getHealPower } from '../engine/combatResolver';
 
 export const UpgradePanel: React.FC = () => {
@@ -18,8 +18,8 @@ export const UpgradePanel: React.FC = () => {
     );
   }
 
-  const baseConfig = UNIT_REGISTRY[unit.type];
-  const tree = UPGRADE_TREES[unit.type];
+  const baseConfig = CLASSES[unit.type];
+  const tree = baseConfig.upgradeTree;
   const goldPool = resources[currentPlayer];
 
   const maxHp = getMaxHp(unit);
@@ -93,7 +93,7 @@ export const UpgradePanel: React.FC = () => {
   return (
     <div className={styles.panel}>
       <div className={styles.title}>
-        <span>{baseConfig.displayName}</span>
+        <span>{baseConfig.name}</span>
         <span className={`${styles.ownerBadge} ${unit.owner === 'player' ? styles.playerBadge : styles.aiBadge}`}>
           {unit.owner === 'player' ? 'Player Unit' : 'AI Unit'}
         </span>

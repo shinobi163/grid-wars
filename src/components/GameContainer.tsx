@@ -8,18 +8,22 @@ import Sidebar from './Sidebar';
 import UpgradePanel from './UpgradePanel';
 import runAiTurn from '../ai/aiEngine';
 import CardsHand from './CardsHand';
+import Deckbuilder from './Deckbuilder';
 
 export const GameContainer: React.FC = () => {
   const store = useGameStore();
-  const { initGame, currentPlayer, winner, turnNumber, showTurnBanner } = store;
+  const { initGame, currentPlayer, winner, turnNumber, showTurnBanner, gameState } = store;
   
   // Prevent double AI executions in React StrictMode
   const aiTurnExecutedRef = useRef<number | null>(null);
 
   // Initialize game on mount
   useEffect(() => {
-    initGame('ai');
-  }, [initGame]);
+    // We only initialize the game if it is already playing
+    if (gameState === 'playing') {
+      initGame('ai');
+    }
+  }, [initGame, gameState]);
 
   // AI Turn Trigger Effect
   useEffect(() => {
@@ -47,43 +51,47 @@ export const GameContainer: React.FC = () => {
         </div>
       </header>
 
-      {/* Main 3-Column Layout */}
-      <main className={styles.mainLayout}>
-        {/* Left Column: Game controls & Logs */}
-        <section className="glass-panel">
-          <Sidebar />
-        </section>
+      {/* Main Content Layout */}
+      {gameState === 'setup' ? (
+        <Deckbuilder />
+      ) : (
+        <main className={styles.mainLayout}>
+          {/* Left Column: Game controls & Logs */}
+          <section className="glass-panel">
+            <Sidebar />
+          </section>
 
-        {/* Center Column: Tactical Grid */}
-        <section className={styles.boardSection}>
-          <div style={{ position: 'relative', width: '100%' }}>
-            <Board />
+          {/* Center Column: Tactical Grid */}
+          <section className={styles.boardSection}>
+            <div style={{ position: 'relative', width: '100%' }}>
+              <Board />
 
-            {/* Game Over Screen Overlay */}
-            {winner && (
-              <div className={`${styles.winnerOverlay} ${winner === 'player' ? styles.playerWin : styles.aiWin}`}>
-                <h2 className={styles.winnerText}>
-                  {winner === 'player' ? 'Victory!' : 'Defeat!'}
-                </h2>
-                <p className={styles.winnerSubtext}>
-                  {winner === 'player'
-                    ? 'You successfully defeated the AI forces.'
-                    : 'The enemy has overrun your troops.'}
-                </p>
-                <button className={styles.btnReplay} onClick={() => initGame('ai')}>
-                  Play Again
-                </button>
-              </div>
-            )}
-          </div>
-          <CardsHand />
-        </section>
+              {/* Game Over Screen Overlay */}
+              {winner && (
+                <div className={`${styles.winnerOverlay} ${winner === 'player' ? styles.playerWin : styles.aiWin}`}>
+                  <h2 className={styles.winnerText}>
+                    {winner === 'player' ? 'Victory!' : 'Defeat!'}
+                  </h2>
+                  <p className={styles.winnerSubtext}>
+                    {winner === 'player'
+                      ? 'You successfully defeated the AI forces.'
+                      : 'The enemy has overrun your troops.'}
+                  </p>
+                  <button className={styles.btnReplay} onClick={() => { useGameStore.setState({ gameState: 'setup' }); }}>
+                    Play Again
+                  </button>
+                </div>
+              )}
+            </div>
+            <CardsHand />
+          </section>
 
-        {/* Right Column: Upgrade panel */}
-        <section className="glass-panel" style={{ height: '100%' }}>
-          <UpgradePanel />
-        </section>
-      </main>
+          {/* Right Column: Upgrade panel */}
+          <section className="glass-panel" style={{ height: '100%' }}>
+            <UpgradePanel />
+          </section>
+        </main>
+      )}
 
       {/* Turn Transition Banner Overlay */}
       {showTurnBanner && (
