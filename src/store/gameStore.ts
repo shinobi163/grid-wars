@@ -117,7 +117,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   actionLog: [],
   turnNumber: 1,
   gameMode: 'ai',
-  gameState: 'setup',
+  gameState: 'playing',
   customDeckComposition: CARD_DEFAULTS,
   hasCycledThisTurn: false,
   
@@ -566,15 +566,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().addFloatingText(attacker.x, attacker.y, `-${result.retaliateDamage}`, 'damage');
     }
 
-    const playerAlive = updatedUnits.some(u => u.owner === 'player');
-    const aiAlive = updatedUnits.some(u => u.owner === 'ai');
+    const playerMilitaryAlive = updatedUnits.some(u => u.owner === 'player' && (u.type === 'swordsman' || u.type === 'archerMedic'));
+    const aiMilitaryAlive = updatedUnits.some(u => u.owner === 'ai' && (u.type === 'swordsman' || u.type === 'archerMedic'));
 
-    if (!playerAlive) {
+    if (!playerMilitaryAlive) {
       set({ winner: 'ai' });
-      get().addLog('Defeat! The AI has eliminated all your units.');
-    } else if (!aiAlive) {
+      get().addLog('Defeat! All your military units have been eliminated.');
+    } else if (!aiMilitaryAlive) {
       set({ winner: 'player' });
-      get().addLog('Victory! You have eliminated all enemy units.');
+      get().addLog('Victory! All enemy military units have been eliminated.');
     }
   },
 
@@ -1005,15 +1005,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
     }
 
-    const playerAlive = updatedUnits.some(u => u.owner === 'player');
-    const aiAlive = updatedUnits.some(u => u.owner === 'ai');
+    const playerMilitaryAlive = updatedUnits.some(u => u.owner === 'player' && (u.type === 'swordsman' || u.type === 'archerMedic'));
+    const aiMilitaryAlive = updatedUnits.some(u => u.owner === 'ai' && (u.type === 'swordsman' || u.type === 'archerMedic'));
 
-    if (!playerAlive) {
+    if (!playerMilitaryAlive) {
       set({ winner: 'ai' });
-      get().addLog('Defeat! The AI has eliminated all your units.');
-    } else if (!aiAlive) {
+      get().addLog('Defeat! All your military units have been eliminated.');
+    } else if (!aiMilitaryAlive) {
       set({ winner: 'player' });
-      get().addLog('Victory! You have eliminated all enemy units.');
+      get().addLog('Victory! All enemy military units have been eliminated.');
     }
   },
 
